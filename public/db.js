@@ -76,5 +76,14 @@ request.onsuccess = function (e) {
     };
   };
 
+//   Saves any changes made while the app is offline to indexedDB. Posted to the backend by checkDB when app goes back online.
+  const saveRecord = (record) => {
+    
+    const transaction = db.transaction(['BudgetStore'], 'readwrite');
+    const store = transaction.objectStore('BudgetStore');
+  
+    store.add(record);
+  };
+
 //   Checks to see if app comes online, then fires the checkDB function to update the backend with any changes.
 window.addEventListener('online', checkDB);
