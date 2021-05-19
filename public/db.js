@@ -35,5 +35,46 @@ request.onsuccess = function (e) {
     }
   };
 
+//   Checks indexedDB for any added records while offline, and posts the changes to the backend when the app goes back online, then clears the indexedDB.
+  function checkDB() {
+    console.log('check db invoked');
+  
+    // Opens a transaction
+    let transaction = db.transaction(['BudgetStore'], 'readwrite');
+  
+    // access your BudgetStore object
+    const store = transaction.objectStore('BudgetStore');
+  
+    // Get all records 
+    const getAll = store.getAll();
+  
+    getAll.onsuccess = function () {
+    //   Adds all records in the store to the backend when the app comes back online
+      if (getAll.result.length > 0) {
+        fetch('/api/transaction/bulk', {
+          method: 'POST',
+          body: JSON.stringify(getAll.result),
+          headers: {
+            Accept: 'application/json, text/plain, */*',
+            'Content-Type': 'application/json',
+          },
+        })
+          .then((response) => response.json())
+          .then((res) => {
+            //If the response has at least 1 entry, we clear the store because the data has now been stored in the backend.
+            if (res.length !== 0) {
+
+              transaction = db.transaction(['BudgetStore'], 'readwrite');
+ 
+              const currentStore = transaction.objectStore('BudgetStore');
+  
+              currentStore.clear();
+             
+            }
+          });
+      }
+    };
+  };
+
 //   Checks to see if app comes online, then fires the checkDB function to update the backend with any changes.
 window.addEventListener('online', checkDB);
